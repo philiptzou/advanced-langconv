@@ -66,8 +66,8 @@ static RuleReturn recursive_convert_rule (Py_UNICODE *text, Py_ssize_t pos,
 	                        }
 	                        memcpy(ret.text + ret.len, msgtext, msglen * sizeof(Py_UNICODE));
 	                        ret.len += msglen;
-	                        Py_XDECREF(msg);
                     	}
+                    	Py_XDECREF(msg);
                     }
                     exceedtime ++;
                 }
@@ -78,8 +78,10 @@ static RuleReturn recursive_convert_rule (Py_UNICODE *text, Py_ssize_t pos,
                 }
                 else {
                     PyObject *textobj;
+                    PyObject *oldtextobj = PyUnicode_FromUnicode(ret.text, ret.len);
+                    textobj = PyObject_CallFunctionObjArgs(hooks->rule_parser, oldtextobj, NULL);
+                    Py_XDECREF(oldtextobj);
                     ret.pos += 2;
-                    textobj = PyObject_CallFunctionObjArgs(hooks->rule_parser, PyUnicode_FromUnicode(ret.text, ret.len), NULL);
                     if (textobj != NULL) {
                         ret.len = PyUnicode_GET_SIZE(textobj);
                         PyMem_RESIZE(ret.text, Py_UNICODE, ret.len);
