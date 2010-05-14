@@ -28,7 +28,7 @@ def test():
 				convhandler = ConverterHandler(var)
 				outp = convhandler.convert(inp, parserules)
 			except Exception:
-				print 'exception occurred.'
+				print 'error occurred.'
 				print_exc()
 			else:
 				print '%.3f sec.' % (time() - start)
