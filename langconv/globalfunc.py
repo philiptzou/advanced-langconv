@@ -39,7 +39,11 @@ def set_cache(name, obj, version = None):
         try:
             cPickle.dump(obj, open('./cache/%s' % name, 'w'))
         except Exception:
-            pass
+            os.makedirs('./cache')
+            try:
+                cPickle.dump(obj, open('./cache/%s' % name, 'w'))
+            except Exception:
+                pass
     elif CACHEMETHOD == DATABASE:
         pass
     elif CACHEMETHOD == MEMCACHE:
