@@ -2,6 +2,7 @@
 
 from __future__ import with_statement
 from langconv import ConverterHandler
+from langconv.settings import VALIDVARIANTS
 from time import time
 import codecs
 from os import listdir
@@ -20,7 +21,7 @@ def test():
 			inp = f.read()
 		print 'input size:', len(inp)
 		parserules = True
-		for var in ('zh', 'zh-hans', 'zh-hant', 'zh-cn', 'zh-hk', 'zh-sg', 'zh-tw'):
+		for var in VALIDVARIANTS:
 			print
 			print 'testing', var, '...',
 			start = time()
