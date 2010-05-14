@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 from settings import *
 from messages import messages
 import cPickle, os
