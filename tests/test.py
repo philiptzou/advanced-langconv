@@ -12,7 +12,9 @@ def test():
 	for testn in listdir('cases'):
 		if not exists(join('cases', testn, 'input')):
 			continue
+		print
 		print '-' * 40
+		print
 		print 'Running test', testn, '...'
 		with codecs.open(join('cases', testn, 'input'), 'r', 'utf-8') as f:
 			inp = f.read()
@@ -29,7 +31,7 @@ def test():
 				print 'exception occurred.'
 				print_exc()
 			else:
-				print '%f sec.' % (time.time() - start)
+				print '%.3f sec.' % (time() - start)
 				if exists(join('cases', testn, 'output.' + var)):
 					print 'comparing converter\'s output with expected output ...'
 					with codecs.open(join('cases', testn, 'output.' + var), 'r', 'utf-8') as f:
