@@ -10,6 +10,6 @@ setup(
 	version = '0.01',
 	description = 'Advanced Language Converter',
 	url = 'http://code.google.com/p/advanced-langconv/',
-	packages = ['langconv'],
+	packages = ['langconv', 'langconv.defaulttables'],
 	ext_modules = [converter]
 ) 
