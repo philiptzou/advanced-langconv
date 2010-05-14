@@ -92,7 +92,7 @@ class _Converter(object):
     def load_table(self, isgroup = False):
         """Load a conversion table.
            Raise ImportException if an import error happens."""
-        newtable = __import__('defaultables.%s' % \
+        newtable = __import__('langconv.defaulttables.%s' % \
                    self.variant.replace('-', '_'), fromlist = 'convtable').convtable
         self.convtable.update(newtable)
         
