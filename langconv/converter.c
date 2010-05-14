@@ -56,7 +56,9 @@ static RuleReturn recursive_convert_rule (Py_UNICODE *text, Py_ssize_t pos,
                 }
                 else {
                     if (!exceedtime && hooks->depth_exceed_msg != NULL) {
-                        PyObject *msg = PyObject_CallFunctionObjArgs(hooks->depth_exceed_msg, PyInt_FromLong(depth), NULL);
+                        PyObject *depthobj = PyInt_FromLong(depth);
+                        PyObject *msg = PyObject_CallFunctionObjArgs(hooks->depth_exceed_msg, depthobj, NULL);
+                        Py_XDECREF(depthobj);
                         if (msg != NULL) {
 	                        Py_ssize_t msglen = PyUnicode_GET_SIZE(msg);
 	                        Py_UNICODE *msgtext = PyUnicode_AS_UNICODE(msg);

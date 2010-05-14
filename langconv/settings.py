@@ -12,14 +12,14 @@ CACHEMETHOD = FILE # could be database or memcache
 # valid variants
 VALIDVARIANTS = ['zh-hans', 'zh-hant', 'zh-cn', 'zh-hk', 'zh-sg', 'zh-tw']
 
-# variant fallbacks
+# variant =fallback on=> variants
 VARIANTFALLBACK = {'zh': ['zh-hans', 'zh-hant', 'zh-cn', 'zh-hk', 'zh-sg', 'zh-hk'],
-                   'zh-hans': ['zh-cn','zh-sg'],
-                   'zh-cn': ['zh-sg','zh-hans'],
-                   'zh-sg': ['zh-cn','zh-hans'],
-                   'zh-hant': ['zh-tw','zh-hk'],
-                   'zh-tw': ['zh-hk','zh-hant'],
-                   'zh-hk': ['zh-tw','zh-hant']
+                   'zh-hans': [],
+                   'zh-cn': ['zh-hans','zh-sg'],
+                   'zh-sg': ['zh-hans','zh-cn'],
+                   'zh-hant': [],
+                   'zh-tw': ['zh-hant','zh-hk'],
+                   'zh-hk': ['zh-hant','zh-tw']
                   }
 
 # using C extension

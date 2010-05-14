@@ -96,7 +96,7 @@ class _Converter(object):
         
         # try to load quicktable from cache
         if not isgroup:
-            self.quicktable = get_cache(self.variant)
+            self.quicktable = get_cache('%s-qtable' % self.variant)
             self.maxlen = get_cache('%s-maxlen' % self.variant)
             if self.quicktable is not None and self.maxlen is not None:
                 return
@@ -109,7 +109,7 @@ class _Converter(object):
         
         # try to dump quicktable to cache
         if not isgroup:
-            set_cache(self.variant, self.quicktable)
+            set_cache('%s-qtable' % self.variant, self.quicktable)
             set_cache('%s-maxlen' % self.variant, self.maxlen)
 
     def update(self, newtable):
@@ -206,8 +206,8 @@ class _RuleParser(object):
         self.handler = handler
         self.flagdict = {'A': lambda flag, rule: self.add_rule(flag, rule, display = True),
                               # add a single rule to convtable and return the converted result
-                              # -{A|rule}-
-                              # -{A;E:zh-hans;E:zh-hant|rule}-
+                              # -{FLAG|rule}-
+                              # FLAG: A[[;NF]|[;NA:variant]]
                          
                          'D': self.describe_rule,
                               # describe the rule
@@ -219,8 +219,8 @@ class _RuleParser(object):
                          
                          'H': lambda flag, rule: self.add_rule(flag, rule, display = False),
                               # add a single rule to convtable
-                              # -{H|rule}-
-                              # -{H;E:zh-hans;E:zh-hant|rule}-
+                              # -{FLAG|rule}-
+                              # FLAG: H[[;NF]|[;NA:variant]]
                          
                          'R': self.display_raw,
                               # raw content
@@ -228,8 +228,8 @@ class _RuleParser(object):
                          
                          'T': self.set_title,
                               # set title
-                              # -{T|rule}-
-                              # -{T;E:zh-hans;E:zh-hant|rule}-
+                              # -{FLAG|rule}-
+                              # FLAG: T[[;NF]|[;NA:variant]]
                         
                          '-': self.remove_rule,
                               # remove rules from convtable
@@ -237,7 +237,14 @@ class _RuleParser(object):
                         }
         self.variants = VALIDVARIANTS
         self.fallback = VARIANTFALLBACK
-        self.variantfallbacks = {}
+        
+        self.asfallback = {}
+        for var in self.variants:
+            self.asfallback[var] = []
+        for varright in self.variants:
+            for varleft in self.fallback[varright]:
+                self.asfallback[varleft].append(varright)
+        
         self.myfallback = self.fallback[self.variant]
 
         varsep_pattern = ';\s*(?='
@@ -265,12 +272,12 @@ class _RuleParser(object):
                 # perhaps it's a "fallback convert"
                 return self.fb_convert(text, flag, rule)
 
-    def parse_rule(self, rule, withtable = True):
+    def parse_rule(self, rule, withtable = True, allowfallback = True,
+                   notadd = []):
         """parse rule and get default output."""
         #TODO:
         #add flags:
         #           NOFALLBACK
-        #           ONLYFALLBACK
         #           NOCONVERT
         
         table = {}
@@ -312,7 +319,9 @@ class _RuleParser(object):
                     if variant == self.variant:
                         out = toword
                         overrule = True
-                    elif not overrule and variant in self.myfallback:
+                    elif allowfallback and \
+                         not overrule and \
+                         variant in self.myfallback:
                         out = toword
                     if withtable:
                         bidtable[variant] = toword
@@ -322,14 +331,25 @@ class _RuleParser(object):
                     variant = unid[1].strip() # zh-hans
                     if variant == self.variant:
                         out = toword
-                    elif not overrule and variant in self.myfallback:
+                        overrule = True
+                    elif allowfallback and \
+                         not overrule and \
+                         variant in self.myfallback:
                         out = toword
                     if withtable:
                         fromword = unid[0].strip()
                         if not unidtable.has_key(variant):
                             unidtable[variant] = {}
                         if toword and variant in self.variants:
-                            unidtable[variant][fromword] = toword
+                            if variant not in notadd:
+                                unidtable[variant][fromword] = toword
+                            if allowfallback:
+                                for fbv in self.asfallback[variant]:
+                                    if fbv not in notadd:
+                                        if not unidtable.has_key(fbv):
+                                            unidtable[fbv] = {}
+                                        if not unidtable[fbv].has_key(fromword):
+                                            unidtable[fbv][fromword] = toword
                 elif out == '':
                     out = choice
             elif out == '':
@@ -348,10 +368,13 @@ class _RuleParser(object):
         # parse bidtable, aka tables filled by 'zh-hans:xxx'
         for (variant, toword) in bidtable.iteritems():
             for fromword in bidtable.itervalues():
-                table[variant][fromword] = toword
-                for fbv in self.fallback[variant]:
-                    if not table[fbv].has_key(fromword):
-                        table[fbv][fromword] = toword
+                if variant not in notadd:
+                    table[variant][fromword] = toword
+                if allowfallback:
+                    for fbv in self.asfallback[variant]:
+                        if not table[fbv].has_key(fromword) and \
+                        fbv not in notadd:
+                            table[fbv][fromword] = toword
         
         # parse unidtable, aka tables filled by 'xxx=>zh-hans:yyy'
         for variant in unidtable.iterkeys():
@@ -361,8 +384,28 @@ class _RuleParser(object):
         
         return (out, table)
 
+    def _parse_multiflag(self, flag):
+        allowfallback = True
+        notadd = []
+        # a valid multiflag could be:
+        #    (A|H|T|-)[[;NF]|[;NA:variant]]
+        for fpart in flag.split(';'):
+            fpart = fpart.strip()
+            if fpart == 'NF': # no fallback
+                allowfallback = False
+            elif fpart.startswith('NA'): # not add
+                napart = fpart.split(':', 1)
+                if len(napart) == 2 and napart[0].strip() == 'NA' and \
+                   napart[1].strip() in self.variants:
+                    notadd.append(napart[1])
+        return (allowfallback, notadd)
+
     def add_rule(self, flag, rule, display):
-        out, tables = self.parse_rule(rule, withtable = True)
+        af, na = self._parse_multiflag(flag)
+        
+        out, tables = self.parse_rule(rule, withtable = True, \
+                                          allowfallback = af, \
+                                          notadd = na)
         for (variant, table) in tables.iteritems():
             self.handler.converters[variant].update(table)
         if display:
@@ -380,9 +423,22 @@ class _RuleParser(object):
         return rule
 
     def set_title(self, flag, rule):
+        af, na = self._parse_multiflag(flag)
+        
+        out = self.parse_rule(rule, withtable = False, \
+                                   allowfallback = af, \
+                                   notadd = na)
         return ''
 
     def remove_rule(self, flag, rule):
+        af, na = self._parse_multiflag(flag)
+        
+        out, tables = self.parse_rule(rule, withtable = True, \
+                                          allowfallback = af, \
+                                          notadd = na)
+        for (variant, table) in tables.iteritems():
+            for oridst in table.iteritems():
+                self.handler.converters[variant].del_rule(*oridst)
         return ''
 
     def fb_convert(self, text, flag, rule):
