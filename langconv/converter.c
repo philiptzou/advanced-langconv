@@ -140,6 +140,7 @@ static PyObject *convert(PyObject *self, PyObject *args)
     Py_ssize_t count_i;
     PyObject *single;
     PyObject *wordlens;
+    PyObject *maxlenobj;
     Py_ssize_t lengthofwordlens;
     Py_ssize_t oriwordlen;
     PyObject *oriwordobj;
@@ -153,22 +154,28 @@ static PyObject *convert(PyObject *self, PyObject *args)
         return NULL;
     
     // retrieve arguments from converter instance
+    Py_XINCREF(converter);
     convtable = PyObject_GetAttrString(converter, "convtable");
     quicktable = PyObject_GetAttrString(converter, "quicktable");
-    outputlentest = PyInt_AsSsize_t(PyObject_GetAttrString(converter, "maxlen"));
-    
+    maxlenobj = PyObject_GetAttrString(converter, "maxlen");
+    outputlentest = PyInt_AsSsize_t(maxlenobj);
+    Py_XDECREF(maxlenobj);
+
     // get hooks
     hooksobj = PyObject_GetAttrString(converter, "hooks");
     hooks.depth_exceed_msg = PyDict_GetItemString(hooksobj, "depth_exceed_msg");
+    Py_XINCREF(hooks.depth_exceed_msg);
     hooks.rule_parser = PyDict_GetItemString(hooksobj, "rule_parser");
-    
+    Py_XINCREF(hooks.rule_parser);
     if (!PyCallable_Check(hooks.depth_exceed_msg)) {
+        Py_XDECREF(hooks.depth_exceed_msg);
         hooks.depth_exceed_msg = NULL;
     }
     if (!PyCallable_Check(hooks.rule_parser)) {
+        Py_XDECREF(hooks.rule_parser);
         hooks.rule_parser = NULL;
     }
-        
+
     // initiate output string
     output = PyMem_NEW(Py_UNICODE, inputlen);
     outputlen = inputlen;
@@ -202,23 +209,28 @@ static PyObject *convert(PyObject *self, PyObject *args)
         single = PyUnicode_FromUnicode(input + inputpos, 1);
         wordlens = PyDict_GetItem(quicktable, single); // check quicktable
         Py_XDECREF(single); // release single
+        Py_XINCREF(wordlens);
         
         if (wordlens == NULL) {
             // find nothing in quicktable, just append the character to output
+            
             output[outputpos ++] = input[inputpos ++];
             outputlentest ++;
         }
         
         else {
-            //return PyList_New(0);
             lengthofwordlens = PyList_Size(wordlens);
             found = 0;
             
             // let's test words from longest to shortest (quicktable is sorted)
             for (count_i = 0; count_i < lengthofwordlens; count_i ++) {
-                oriwordlen = PyInt_AsSsize_t(PyList_GetItem(wordlens, count_i));
+                PyObject *wordlenobj = PyList_GetItem(wordlens, count_i);
+                Py_XINCREF(wordlenobj);
+                oriwordlen = PyInt_AsSsize_t(wordlenobj);
+                Py_XDECREF(wordlenobj);
                 oriwordobj = PyUnicode_FromUnicode(input + inputpos, (Py_ssize_t) oriwordlen);
                 convwordobj = PyDict_GetItem(convtable, oriwordobj); // check convtable
+                Py_XINCREF(convwordobj);
                 Py_XDECREF(oriwordobj); // release oriwordobj
                 if (convwordobj != NULL) {
                     if (PyUnicode_Check(convwordobj)) {
@@ -233,6 +245,7 @@ static PyObject *convert(PyObject *self, PyObject *args)
                         break;
                     }
                 }
+                Py_XDECREF(convwordobj);
             }
             if (found == 0) {
                 // find nothing, just append the character to output
@@ -240,10 +253,17 @@ static PyObject *convert(PyObject *self, PyObject *args)
                 outputlentest ++;
             }
         }
+        Py_XDECREF(wordlens);
     }
 
     ret = PyUnicode_FromUnicode(output, outputpos);
     PyMem_DEL(output);
+    Py_XDECREF(convtable);
+    Py_XDECREF(quicktable);
+    Py_XDECREF(hooks.depth_exceed_msg);
+    Py_XDECREF(hooks.rule_parser);
+    Py_XDECREF(hooksobj);
+    Py_XDECREF(converter);
     return ret;
 }
 
