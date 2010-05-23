@@ -20,11 +20,11 @@ class ConverterHandler(object):
         
         self.mainconverter = self.converters[variant]
 
-    def convert(self, content, parserule = True):
-        return self.mainconverter.convert(content, parserule)
+    def convert(self, content, parserules = True):
+        return self.mainconverter.convert(content, parserules)
 
-    def convert_to(self, variant, content, parserule = True):
-        return self.converters[variant].convert(content, parserule)
+    def convert_to(self, variant, content, parserules = True):
+        return self.converters[variant].convert(content, parserules)
 
     def parse(self, text):
         return self.ruleparser.parse(text)
