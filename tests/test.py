@@ -12,7 +12,7 @@ from traceback import print_exc
 WRITEOUTPUT = False
 
 def test():
-    for testn in listdir('cases'):
+    for testn in sorted(listdir('cases')):
         if not exists(join('cases', testn, 'input')):
             continue
         print
