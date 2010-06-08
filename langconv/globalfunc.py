@@ -1,10 +1,14 @@
 from settings import *
 from messages import messages
-import cPickle, os
+import os
 try:
     import chardet
 except ImportError:
     chardet = None
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 def to_unicode(content):
     if not isinstance(content, basestring):
@@ -36,11 +40,11 @@ def set_cache(settings, name, obj, version = None):
     name = _get_cache_name(name, version)
     if settings.CACHEMETHOD == CACHE_FILE:
         try:
-            cPickle.dump(obj, open('./cache/%s' % name, 'w'))
+            pickle.dump(obj, open('./cache/%s' % name, 'w'))
         except Exception:
             os.makedirs('./cache')
             try:
-                cPickle.dump(obj, open('./cache/%s' % name, 'w'))
+                pickle.dump(obj, open('./cache/%s' % name, 'w'))
             except Exception:
                 pass
     elif settings.CACHEMETHOD == CACHE_DATABASE:
@@ -52,7 +56,7 @@ def get_cache(settings, name, version = None):
     name = _get_cache_name(name, version)
     if settings.CACHEMETHOD == CACHE_FILE:
         try:
-            return cPickle.load(open('./cache/%s' % name))
+            return pickle.load(open('./cache/%s' % name))
         except:
             return None
     elif settings.CACHEMETHOD == CACHE_DATABASE:
