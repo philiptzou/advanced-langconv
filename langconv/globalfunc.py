@@ -1,18 +1,17 @@
 from settings import *
 from messages import messages
 import cPickle, os
+try:
+    import chardet
+except ImportError:
+    chardet = None
 
 def to_unicode(content):
     if not isinstance(content, basestring):
-        return unicode(content)
-    if not isinstance(content, unicode):
-        for enc in ENCODING:
-            try:
-                return content.decode(enc)
-            except UnicodeDecodeError, err:
-                pass
-        else:
-            raise UnicodeDecodeError(*err)
+        content = unicode(content)
+    elif not isinstance(content, unicode):
+        enc = chardet.detect(content)['encoding'] if chardet else 'utf8'
+        content = content.decode(enc)
     return content
 
 def get_message(lang, name, *args, **kwargs):
@@ -33,9 +32,9 @@ def _get_cache_name(name, version = None):
     else:
         return '%s_unknown_version.cache' % name.replace('-', '_')
 
-def set_cache(name, obj, version = None):
+def set_cache(settings, name, obj, version = None):
     name = _get_cache_name(name, version)
-    if CACHEMETHOD == FILE:
+    if settings.CACHEMETHOD == CACHE_FILE:
         try:
             cPickle.dump(obj, open('./cache/%s' % name, 'w'))
         except Exception:
@@ -44,19 +43,19 @@ def set_cache(name, obj, version = None):
                 cPickle.dump(obj, open('./cache/%s' % name, 'w'))
             except Exception:
                 pass
-    elif CACHEMETHOD == DATABASE:
+    elif settings.CACHEMETHOD == CACHE_DATABASE:
         pass
-    elif CACHEMETHOD == MEMCACHE:
+    elif settings.CACHEMETHOD == CACHE_MEMCACHE:
         pass
 
-def get_cache(name, version = None):
+def get_cache(settings, name, version = None):
     name = _get_cache_name(name, version)
-    if CACHEMETHOD == FILE:
+    if settings.CACHEMETHOD == CACHE_FILE:
         try:
             return cPickle.load(open('./cache/%s' % name))
         except:
             return None
-    elif CACHEMETHOD == DATABASE:
+    elif settings.CACHEMETHOD == CACHE_DATABASE:
         pass
-    elif CACHEMETHOD == MEMCACHE:
+    elif settings.CACHEMETHOD == CACHE_MEMCACHE:
         pass

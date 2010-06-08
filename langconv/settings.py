@@ -1,26 +1,32 @@
-# -*- coding: utf-8 -*-
 
-# The decode encoding allowed
-ENCODING = ('UTF-8', 'GBK', 'BIG5HKSCS')
+# Constants
+CACHE_FILE, CACHE_DATABASE, CACHE_MEMCACHE = xrange(3)
 
-# cache setting
-FILE = 1
-DATABASE = 2
-MEMCACHE = 3
-CACHEMETHOD = FILE # could be database or memcache
+class Settings(object):
+    def __init__(self, settings):
+        self._settings = dict(
+            # cache setting
+            CACHEMETHOD = CACHE_FILE, # could be database or memcache
 
-# valid variants
-VALIDVARIANTS = ['zh-hans', 'zh-hant', 'zh-cn', 'zh-hk', 'zh-sg', 'zh-tw']
+            # valid variants
+            VALIDVARIANTS = ['zh-hans', 'zh-hant', 'zh-cn', 'zh-hk', 'zh-sg', 'zh-tw'],
 
-# variant =fallback on=> variants
-VARIANTFALLBACK = {'zh': ['zh-hans', 'zh-hant', 'zh-cn', 'zh-hk', 'zh-sg', 'zh-hk'],
-                   'zh-hans': [],
-                   'zh-cn': ['zh-hans','zh-sg'],
-                   'zh-sg': ['zh-hans','zh-cn'],
-                   'zh-hant': [],
-                   'zh-tw': ['zh-hant','zh-hk'],
-                   'zh-hk': ['zh-hant','zh-tw']
-                  }
+            # variant =fallback on=> variants
+            VARIANTFALLBACK = {
+                'zh': ['zh-hans', 'zh-hant', 'zh-cn', 'zh-hk', 'zh-sg', 'zh-hk'],
+                'zh-hans': [],
+                'zh-cn': ['zh-hans','zh-sg'],
+                'zh-sg': ['zh-hans','zh-cn'],
+                'zh-hant': [],
+                'zh-tw': ['zh-hant','zh-hk'],
+                'zh-hk': ['zh-hant','zh-tw']
+            },
+        )
+        self._settings.update(settings)
+    
+    def __getattr__(self, name):
+        try:
+            return self._settings[name]
+        except KeyError:
+            raise AttributeError
 
-# using C extension
-USINGC = True

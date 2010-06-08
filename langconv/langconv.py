@@ -2,7 +2,7 @@
 Advanced Language Converter
 """
 from globalfunc import *
-from settings import *
+from settings import Settings
 import re
 try:
     import converter
@@ -10,14 +10,16 @@ except ImportError:
     converter = None
 
 class ConverterHandler(object):
-    def __init__(self, variant):
-    
+    def __init__(self, variant, settings):
+        
+        self.settings = Settings(settings)
+        
         ### INITIATE CONVERTERS AND RULEPARSER ###
         self.variant = variant
         self.converters = {}
         self.ruleparser = _RuleParser(variant, self)
         
-        for vvariant in VALIDVARIANTS:
+        for vvariant in settings.VALIDVARIANTS:
             self.converters[vvariant] = _Converter(vvariant, self)
         
         self.mainconverter = self.converters[variant]
@@ -98,8 +100,8 @@ class _Converter(object):
         
         # try to load quicktable from cache
         if not isgroup:
-            self.quicktable = get_cache('%s-qtable' % self.variant)
-            self.maxlen = get_cache('%s-maxlen' % self.variant)
+            self.quicktable = get_cache(self.handler.settings, '%s-qtable' % self.variant)
+            self.maxlen = get_cache(self.handler.settings, '%s-maxlen' % self.variant)
             if self.quicktable is not None and self.maxlen is not None:
                 return
             else:
@@ -111,8 +113,8 @@ class _Converter(object):
         
         # try to dump quicktable to cache
         if not isgroup:
-            set_cache('%s-qtable' % self.variant, self.quicktable)
-            set_cache('%s-maxlen' % self.variant, self.maxlen)
+            set_cache(self.handler.settings, '%s-qtable' % self.variant, self.quicktable)
+            set_cache(self.handler.settings, '%s-maxlen' % self.variant, self.maxlen)
 
     def update(self, newtable):
         self.convtable.update(newtable)
@@ -237,8 +239,8 @@ class _RuleParser(object):
                               # remove rules from convtable
                               # -{-|rule}-
                         }
-        self.variants = VALIDVARIANTS
-        self.fallback = VARIANTFALLBACK
+        self.variants = self.handler.settings.VALIDVARIANTS
+        self.fallback = self.handler.settings.VARIANTFALLBACK
         
         self.asfallback = {}
         for var in self.variants:
