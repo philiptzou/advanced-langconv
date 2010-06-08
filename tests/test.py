@@ -9,8 +9,6 @@ from os import listdir
 from os.path import join, exists
 from traceback import print_exc
 
-WRITEOUTPUT = False
-
 def test():
     for testn in sorted(listdir('cases')):
         if not exists(join('cases', testn, 'input')):
@@ -43,9 +41,6 @@ def test():
                         print 'OK'
                     else:
                         print 'FAILED'
-                else:
-                    with codecs.open(join('cases', testn, 'output.' + var), 'w', 'utf-8') as f:
-                        f.write(outp)
 
 if __name__ == '__main__':
     test()
