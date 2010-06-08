@@ -4,8 +4,10 @@ Advanced Language Converter
 from globalfunc import *
 from settings import *
 import re
-if USINGC:
+try:
     import converter
+except ImportError:
+    converter = None
 
 class ConverterHandler(object):
     def __init__(self, variant):
@@ -126,7 +128,7 @@ class _Converter(object):
         if self.convtable.get(ori) == dst:
             self.convtable.pop(ori)
     
-    if USINGC:
+    if converter: # The C module has been imported correctly
         def convert(self, content, parserules = True):
             content = to_unicode(content)
             return converter.convert(self, content, parserules)
