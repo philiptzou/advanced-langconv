@@ -10,7 +10,7 @@ except ImportError:
     converter = None
 
 class ConverterHandler(object):
-    def __init__(self, variant, settings):
+    def __init__(self, variant, settings = {}):
         
         self.settings = Settings(settings)
         
@@ -19,7 +19,7 @@ class ConverterHandler(object):
         self.converters = {}
         self.ruleparser = _RuleParser(variant, self)
         
-        for vvariant in settings.VALIDVARIANTS:
+        for vvariant in self.settings.VALIDVARIANTS:
             self.converters[vvariant] = _Converter(vvariant, self)
         
         self.mainconverter = self.converters[variant]
